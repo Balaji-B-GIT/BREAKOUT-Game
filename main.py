@@ -1,3 +1,4 @@
+import turtle
 from turtle import *
 from ball import *
 from player_paddle import *
@@ -14,66 +15,61 @@ screen.listen()
 screen.tracer(0)
 
 
+sec = 0
+def timer():
+    global sec
+    sec += 1
+    screen.ontimer(timer, 1000)
+timer()
+
+
 # objects
+text = turtle.Turtle()
 player_paddle = Paddle((0, -250))
 ball = Ball("white")
 
-for i in range(1,10):
-    add = 85*i
-    pos = (-430+add,270)
-    brp = BreakoutPaddles(position=pos,color="red")
-    breakable_paddles.append(brp)
+# Create breakable paddles
+colors = ["red", "orange", "yellow", "green", "blue"]
+y_positions = [270, 210, 150, 90, 30]
 
-
-for i in range(1,10):
-    add = 85 * i
-    pos = (-430 + add, 210)
-    brp = BreakoutPaddles(position=pos, color="orange")
-    breakable_paddles.append(brp)
-
-for i in range(1,10):
-    add = 85 * i
-    pos = (-430 + add, 150)
-    brp = BreakoutPaddles(position=pos, color="yellow")
-    breakable_paddles.append(brp)
-
+# for y, color in zip(y_positions, colors):
+#     for i in range(1, 10):
+#         add = 85 * i
+#         pos = (-430 + add, y)
+#         brp = BreakoutPaddles(position=pos, color=color)
+#         breakable_paddles.append(brp)
 for i in range(1,10):
     add = 85 * i
     pos = (-430 + add, 90)
     brp = BreakoutPaddles(position=pos, color="green")
     breakable_paddles.append(brp)
-
-for i in range(1,10):
-    add = 85 * i
-    pos = (-430 + add, 30)
-    brp = BreakoutPaddles(position=pos, color="blue")
-    breakable_paddles.append(brp)
-
 # ---------------------------------------------
 
 screen.onkeypress(key="a", fun = player_paddle.move_left)
 screen.onkeypress(key="d", fun = player_paddle.move_right)
 
-speed = 0.007
+died = 0
+paddles_broken = 0
+speed = 0.001
+speeds = [0.004]
 game_on = True
 while game_on:
+    if speed < 0:
+        speed = 0
     time.sleep(speed)
     screen.update()
     ball.move()
 
     for paddle in breakable_paddles:
-        if paddle.distance(ball) < 50 and (ball.ycor() == 250 or ball.ycor() == 190 or ball.ycor() == 130 or ball.ycor() == 70 or ball.ycor() == 10):
-            if speed > 0.00010:
-                speed -= 0.001
-            color = paddle.getturtle().color()
-            if color[1] == "black":
-                pass
-            else:
-                ball.color(color[1])
-            ball.bounce_y()
-            print("collided")
+        if paddle.distance(ball) < 45 and paddle.ycor() - 20 < ball.ycor() < paddle.ycor() + 20:
+            paddles_broken += 1
+            if paddles_broken % 5 == 0:
+                speed -= 0.0007
+            ball.color(paddle.getturtle().color()[1])
             paddle.reset()
-            del paddle
+            paddle.penup()
+            paddle.goto((-280,380))
+            ball.bounce_y()
 
 
     # bounce on left and right side
@@ -85,9 +81,19 @@ while game_on:
         ball.bounce_y()
 
     # bounce on paddle
-    if ball.distance(player_paddle) < 70 and ball.ycor() < -230:
+    if ball.distance(player_paddle) < 70 and ball.ycor() < -230 and ball.y_move < 0:
+        player_paddle.color(ball.getturtle().color()[1])
         ball.bounce_y()
 
+    if ball.ycor() < -280:
+        died += 1
+        time.sleep(1)
+        ball.home()
+    if paddles_broken == 9:
+        ball.reset()
+        player_paddle.reset()
+        game_on = False
 
+text.write(arg="Completed",font=("ariel",50,"bold"))
 
 screen.mainloop()
